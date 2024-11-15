@@ -2,7 +2,7 @@
 world_width, world_height = 1600, 1200
 
 screen_width, screen_height = 800, 600
-ui_height = 200
+ui_height = 300
 
 circle_radius = 10
 circle_x, circle_y = 400, 300

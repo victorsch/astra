@@ -1,4 +1,4 @@
-import sys, random, math, string
+import sys, random, math, string, pygame, time
 import constants
 from astrian import Astrian
 import astrian_actions
@@ -14,12 +14,18 @@ class GameWorld:
         self.camera_y = 0
         self.zoom = 1.0
         self.factions = []
+        self.start_time = time.time()
+
+    def get_world_age(self):
+        return time.time() - self.start_time
 
     def handle_frame(self):
+        self.draw_home_bases()
         for i in range(len(self.astrians)):
             for j in range(i + 1, len(self.astrians)):
                 if astrian_actions.are_colliding(self.astrians[i], self.astrians[j]):
                     astrian_actions.handle_collision(self.astrians[i], self.astrians[j])      
+        print(f"Number of astrians: {len(self.astrians)}")
         for astrian in self.astrians:
             if not astrian.is_dead:
                 self.handle_astrian_frame(astrian)
@@ -42,6 +48,11 @@ class GameWorld:
                 astrian.gestation_countdown -= 1
                 if astrian.gestation_countdown <= 0:
                     astrian_actions.birth_child(self, astrian)
+        if (astrian.remove_collision_block_countdown > 0):
+            astrian.remove_collision_block_countdown -= 1
+            if (astrian.remove_collision_block_countdown > 5):
+                astrian.colliding_actors = []
+            
 
     def generate_random_faction_name(self):
         syllables = ["ka", "zu", "mi", "ra", "ta", "lo", "na", "fi", "vo", "gu"]
@@ -76,3 +87,20 @@ class GameWorld:
             faction_counts[astrian.faction.name] += 1
         # return factions greater than 0
         return {k: v for k, v in faction_counts.items() if v > 0}
+    
+    def draw_home_bases(self):
+        for faction in self.factions:
+            faction.draw(self.screen, self.camera_x, self.camera_y, self.zoom)
+            # home_base_x = faction.home_base_x
+            # home_base_y = faction.home_base_y
+            # square_size = 20  # Size of the square
+            # pygame.draw.rect(
+            #     self.screen,
+            #     faction.color,
+            #     (
+            #         int((home_base_x - self.camera_x) * self.zoom) - square_size // 2,
+            #         int((home_base_y - self.camera_y) * self.zoom) - square_size // 2,
+            #         square_size,
+            #         square_size
+            #     )
+            # )

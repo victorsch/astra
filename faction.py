@@ -1,4 +1,4 @@
-import sys, random, math
+import sys, random, math, pygame
 import constants
 
 class Faction:
@@ -8,11 +8,18 @@ class Faction:
         self.home_base_x = random.randint(0, constants.world_width)
         self.home_base_y = random.randint(0, constants.world_height)
         self.leader = None
+        self.cities = []
+        self.cities.append(City(random.randint(0, constants.world_width), random.randint(0, constants.world_height), 20, self))
 
     @staticmethod
     def generate_random_faction_name():
         syllables = ["ka", "zu", "mi", "ra", "ta", "lo", "na", "fi", "vo", "gu"]
         name = "".join(random.choice(syllables) for _ in range(random.randint(2, 4)))
+        return name.capitalize()
+    
+    def generate_random_city_name():
+        syllables = ["ka", "zu", "mi", "ra", "ta", "lo", "na", "fi", "vo", "gu"]
+        name = "".join(random.choice(syllables) for _ in range(random.randint(3, 7)))
         return name.capitalize()
 
     @staticmethod
@@ -26,3 +33,30 @@ class Faction:
     def create_new_faction():
         faction = Faction(Faction.generate_random_faction_name(), Faction.generate_random_faction_color())
         return faction
+    
+    def draw(self, surface, camera_x, camera_y, zoom):
+        for city in self.cities:
+            city.draw(surface, camera_x, camera_y, zoom)
+    
+class City:
+    def __init__(self, x, y, size, faction):
+        self.x = x
+        self.y = y
+        self.name = Faction.generate_random_city_name()
+        self.size = size
+        self.faction = faction
+
+    def draw(self, surface, camera_x, camera_y, zoom):
+        pygame.draw.rect(
+            surface,
+            self.faction.color,
+            (
+                int((self.x - camera_x) * zoom) - self.size // 2,
+                int((self.y - camera_y) * zoom) - self.size // 2,
+                int(self.size * zoom),
+                int(self.size * zoom)
+            )
+        )
+
+    def claim_city(self, faction):
+        self.faction = faction

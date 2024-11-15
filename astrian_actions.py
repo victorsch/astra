@@ -11,9 +11,11 @@ standard_velocity = 0.1
 def are_colliding(circle_a, circle_b):
     distance = math.sqrt((circle_a.x - circle_b.x) ** 2 + (circle_a.y - circle_b.y) ** 2)
     colliding = distance < (circle_a.radius + circle_b.radius)
-    if not colliding and circle_b.name in circle_a.colliding_actors:
-        #print(f"{circle_a.name} stops colliding with {circle_b.name}")
-        circle_a.colliding_actors.remove(circle_b.name)
+
+    # after 2000 frames, remove the collision blocks so that collisions can be handled normally (this is to prevent a single collision from being handled an unreasonable number of times)
+    if colliding:
+        circle_a.remove_collision_block_countdown = 2000
+        circle_b.remove_collision_block_countdown = 2000
     return colliding
 
 def factions_match(circle_a, circle_b):
@@ -34,12 +36,12 @@ def subjugate(circle_a, circle_b):
     circle_b.color = circle_a.color
 
 def attack(circle_a, circle_b):
-    #print(f"{circle_a.name} attacks {circle_b.name}")
+    print(f"{circle_a.name} attacks {circle_b.name}")
     attacker = circle_a if roll_friendship() else circle_b
     defender = circle_b if attacker == circle_a else circle_a
     defender.health -= 100
     if defender.health <= 0:
-        print(f"{defender.name}  killed by {attacker.name}")
+        print(f"{defender.name} killed by {attacker.name}")
         defender.is_dead = True
         attacker.health += 10
         attacker.kill_count += 1
@@ -80,7 +82,6 @@ def birth_child(game_world, astrian):
 
 def handle_collision(circle_a, circle_b):
     if (circle_b.name not in circle_a.colliding_actors and circle_a.name not in circle_b.colliding_actors):
-        #print(f"{circle_a.name} starts collides with {circle_b.name}")
         circle_a.colliding_actors.append(circle_b.name)
         circle_b.colliding_actors.append(circle_a.name)
         if not factions_match(circle_a, circle_b):
@@ -95,7 +96,4 @@ def handle_collision(circle_a, circle_b):
                     if not mating_cooldown(circle_a, circle_b):
                         mate(circle_a, circle_b)
     else:
-        # print(f"{circle_a.name} is already colliding with {circle_b.name}")
-        # print(f"{circle_a.colliding_actors}")
-        # print(f"{circle_b.colliding_actors}")
         pass
