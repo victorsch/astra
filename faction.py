@@ -9,7 +9,7 @@ class Faction:
         self.home_base_y = random.randint(0, constants.world_height)
         self.leader = None
         self.cities = []
-        self.cities.append(City(random.randint(0, constants.world_width), random.randint(0, constants.world_height), 20, self))
+        self.cities.append(City(random.randint(0, constants.world_width), random.randint(0, constants.world_height), 50, self))
 
     @staticmethod
     def generate_random_faction_name():
@@ -45,6 +45,7 @@ class City:
         self.name = Faction.generate_random_city_name()
         self.size = size
         self.faction = faction
+        self.resources = 0
 
     def draw(self, surface, camera_x, camera_y, zoom):
         pygame.draw.rect(
@@ -59,4 +60,17 @@ class City:
         )
 
     def claim_city(self, faction):
+        if self.faction:
+            if (self in self.faction.cities):
+                self.faction.cities.remove(self)
         self.faction = faction
+        faction.cities.append(self)
+
+    def is_hovered(self, mouse_pos, camera_x, camera_y, zoom):
+        rect = pygame.Rect(
+            int((self.x - camera_x) * zoom) - self.size // 2,
+            int((self.y - camera_y) * zoom) - self.size // 2,
+            int(self.size * zoom),
+            int(self.size * zoom)
+        )
+        return rect.collidepoint(mouse_pos)

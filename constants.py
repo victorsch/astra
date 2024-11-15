@@ -21,3 +21,4 @@ grey_color = (169, 169, 169)
 # Scroll offset for the UI
 scroll_speed = 20
 
+city_resource_cost = 150

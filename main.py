@@ -145,8 +145,6 @@ def get_clicked_astrian(mouse_pos, astrians, scroll_offset):
 def is_back_button_clicked(mouse_pos, scroll_offset):
     y_offset = 10 - scroll_offset
     back_button_rect = pygame.Rect(10, constants.screen_height + y_offset + 200, 100, 30)
-    print(astrian_back_button_rect)
-    print(mouse_pos)
     return astrian_back_button_rect.collidepoint(mouse_pos)
 
 # Selected Astrian for detailed stats
@@ -212,6 +210,8 @@ while True:
                 game_world.camera_x -= (mouse_x - drag_start_x) / game_world.zoom
                 game_world.camera_y -= (mouse_y - drag_start_y) / game_world.zoom
                 drag_start_x, drag_start_y = mouse_x, mouse_y
+            else:
+                game_world.check_hovered_city(pygame.mouse.get_pos())
 
     game_world.screen.fill(constants.black_color)
 
@@ -219,6 +219,26 @@ while True:
 
     # Render the UI
     render_ui(screen, game_world.astrians, scroll_offset, selected_astrian, game_world)
+
+    # Display city details if hovering over a city
+    if game_world.hovered_city:
+        city = game_world.hovered_city
+        faction = city.faction
+        city_details = [
+            f"City: {city.name}",
+            f"Faction: {faction.name}",
+            f"Color: {faction.color}",
+            f"Leader: {faction.leader.name if faction.leader else 'None'}",
+            f"Members: {game_world.get_faction_counts().get(faction.name, 0)}",
+            f"Resources: {city.resources}"
+        ]
+        for i, detail in enumerate(city_details):
+            text_surface = font.render(detail, True, constants.white_color)
+            screen.blit(text_surface, (10, 10 + i * 20))
+
+    # highlighted astrian overlay
+    if selected_astrian:
+        selected_astrian.draw_highlight(screen, game_world.camera_x, game_world.camera_y, game_world.zoom)
 
     # Update the display
     pygame.display.flip()
