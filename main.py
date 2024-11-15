@@ -112,7 +112,7 @@ def render_ui(surface, astrians, scroll_offset, selected_astrian, game_world):
 
     else:
         for i, astrian in enumerate(game_world.astrians):
-            text_surface = font.render(f"{astrian.name}: Health={astrian.health}, Faction={astrian.faction.name}, Kills={astrian.kill_count}, Children={astrian.child_count}", True, constants.black_color)
+            text_surface = font.render(f"{astrian.name}: Health={astrian.health}, Faction={astrian.faction.name}, Age={astrian.get_age()}, Kills={astrian.kill_count}, Children={astrian.child_count}", True, constants.black_color)
             ui_surface.blit(text_surface, (10, y_offset + i * line_height))
 
         # Count the number of Astrians in each faction
@@ -227,6 +227,7 @@ while True:
         city_details = [
             f"City: {city.name}",
             f"Faction: {faction.name}",
+            f"Age: {city.get_age()} years",
             f"Color: {faction.color}",
             f"Leader: {faction.leader.name if faction.leader else 'None'}",
             f"Members: {game_world.get_faction_counts().get(faction.name, 0)}",

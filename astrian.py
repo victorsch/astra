@@ -5,6 +5,7 @@ import math
 import random
 import names
 import constants
+import time
 from enum import Enum
 from faction import Faction, City
 
@@ -21,6 +22,7 @@ class Astrian:
         self.faction = faction
         self.health = 100
         self.name = names.get_full_name()
+        self.birth_time = time.time()
         self.is_dead = False
         self.has_target = False
         self.direction_change_counter = 0
@@ -50,12 +52,14 @@ class Astrian:
                     self.current_action = None
         else:
             # Select a new objective if none is active
+            faction_ref = game_world.get_faction_by_name(self.faction.name)
+            faction_can_build_city = game_world.check_faction_can_build_more_cities(faction_ref)
             faction_count = game_world.get_faction_counts().get(self.faction.name, 0)
             if faction_count == 1:  # Trigger SeekFoeObjective if faction has only 1 member left
                 self.current_action = SeekFoeObjective(self, game_world)
             elif faction_count < 3 and self.is_leader():  # Trigger ResettleObjective if faction has less than 3 members and is leader
                 self.current_action = ResettleObjective(self, game_world)
-            elif self.is_leader() and any(city.resources >= constants.city_resource_cost for city in self.faction.cities):  # Trigger SettleNewCityObjective if any city has more than 50 resources
+            elif self.is_leader() and faction_can_build_city and any(city.resources >= constants.city_resource_cost for city in self.faction.cities):  # Trigger SettleNewCityObjective if any city has more than 50 resources
                 self.current_action = SettleNewCityObjective(self, game_world)
             else:
                 rand = random.random()
@@ -67,13 +71,17 @@ class Astrian:
                 elif rand > 0.30:
                     self.current_action = SeekMateObjective(self, game_world)
                 elif rand > 0.02:
-                    self.current_action = RandomMovementObjective(self, game_world, 250)
+                    self.current_action = RandomMovementObjective(self, game_world)
                 else:
-                    if (faction_count > 20):
+                    if (faction_count > constants.rebellion_threshold):
                         self.current_action = BranchOffObjective(self, game_world)                    
                     else:
-                        self.current_action = RandomMovementObjective(self, game_world, 250)
+                        self.current_action = RandomMovementObjective(self, game_world)
         self.rect.topleft = (self.x - self.radius, self.y - self.radius)
+
+    def check_age(self):
+        if self.get_age() > constants.max_age:
+            self.is_dead = True
 
     def is_leader(self):
         # Assuming the leader is the first Astrian in the faction
@@ -81,6 +89,13 @@ class Astrian:
 
     def kill(self):
         self.is_dead = True
+
+    def get_age(self):
+        seconds_time = time.time() - self.birth_time
+        # convert to something that represents "years"
+        # clamp to integers
+        years = int(seconds_time / constants.year_length)
+        return years
 
     def draw(self, surface, camera_x, camera_y, zoom):
         pygame.draw.circle(surface, self.color, (int((self.x - camera_x) * zoom), int((self.y - camera_y) * zoom)), int(self.radius * zoom))
@@ -145,9 +160,9 @@ class MoveToHomeBaseObjective(Objective):
         return completed
     
 class RandomMovementObjective(Objective):
-    def __init__(self, astrian, game_world, radius):
+    def __init__(self, astrian, game_world, radius = None):
         super().__init__(astrian, game_world)
-        self.radius = radius
+        self.radius = radius if radius is not None else constants.wander_distance
         self.world_width = constants.world_width
         self.world_height = constants.world_height
         self.target_x, self.target_y = self._choose_random_point()
@@ -471,8 +486,11 @@ class ClaimEmptyFactionObjective(Objective):
         if self.target_faction:
             distance = math.sqrt((self.astrian.x - self.target_base_x) ** 2 + (self.astrian.y - self.target_base_y) ** 2)
             if distance < self.astrian.radius:
-                if (random.random() < 0.50): # random chance to claim
-                    self._claim_faction()
+                # check if faction can claim more cities
+                faction_ref = self.game_world.get_faction_by_name(self.target_faction.name)
+                if self.game_world.check_faction_can_build_more_cities(self.target_faction):
+                    if (random.random() < 0.50): # random chance to claim
+                        self._claim_faction()
                 else: # else destroy
                     if (self.target_city in self.target_faction.cities):
                         self.target_faction.cities.remove(self.target_city)
@@ -509,8 +527,8 @@ class SettleNewCityObjective(Objective):
 
     def _find_new_city_location(self):
         while True:
-            x = random.randint(0, self.game_world.width)
-            y = random.randint(0, self.game_world.height)
+            x = random.uniform(self.astrian.x - constants.wander_distance, self.astrian.x + constants.wander_distance)
+            y = random.uniform(self.astrian.y - constants.wander_distance, self.astrian.y + constants.wander_distance)
             return x, y
 
     def perform(self):

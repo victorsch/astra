@@ -1,10 +1,12 @@
 import sys, random, math, pygame
 import constants
+import time
 
 class Faction:
     def __init__(self, name, color):
         self.name = name
         self.color = color
+        self.founding_time = time.time()
         self.home_base_x = random.randint(0, constants.world_width)
         self.home_base_y = random.randint(0, constants.world_height)
         self.leader = None
@@ -34,6 +36,11 @@ class Faction:
         faction = Faction(Faction.generate_random_faction_name(), Faction.generate_random_faction_color())
         return faction
     
+    def get_age(self):
+        seconds_time = time.time() - self.founding_time
+        years = int(seconds_time / constants.year_length)
+        return years
+    
     def draw(self, surface, camera_x, camera_y, zoom):
         for city in self.cities:
             city.draw(surface, camera_x, camera_y, zoom)
@@ -42,6 +49,7 @@ class City:
     def __init__(self, x, y, size, faction):
         self.x = x
         self.y = y
+        self.founding_time = time.time()
         self.name = Faction.generate_random_city_name()
         self.size = size
         self.faction = faction
@@ -74,3 +82,8 @@ class City:
             int(self.size * zoom)
         )
         return rect.collidepoint(mouse_pos)
+    
+    def get_age(self):
+        seconds_time = time.time() - self.founding_time
+        years = int(seconds_time / constants.year_length)
+        return years

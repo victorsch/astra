@@ -1,8 +1,8 @@
 import sys, random, math, string, pygame, time
 import constants
 from astrian import Astrian
-import astrian_actions
 from faction import Faction
+from astrian_actions import AstrianHandler
 
 class GameWorld:
     def __init__(self, width, height, screen, astrians=[]):
@@ -17,6 +17,7 @@ class GameWorld:
         self.start_time = time.time()
         self.quadtree = Quadtree(0, pygame.Rect(0, 0, width, height))
         self.hovered_city = None
+        self.astrian_handler = AstrianHandler(self)
 
     def get_world_age(self):
         return time.time() - self.start_time
@@ -33,6 +34,7 @@ class GameWorld:
         #         if astrian_actions.are_colliding(self.astrians[i], self.astrians[j]):
         #             astrian_actions.handle_collision(self.astrians[i], self.astrians[j])      
         for astrian in self.astrians:
+            astrian.check_age()
             if not astrian.is_dead:
                 self.handle_astrian_frame(astrian)
                 astrian.move(self)
@@ -40,27 +42,27 @@ class GameWorld:
                 possible_collisions = []
                 self.quadtree.retrieve(possible_collisions, astrian.rect)
                 for other in possible_collisions:
-                    if other != astrian and astrian_actions.are_colliding(astrian, other):
-                        astrian_actions.handle_collision(astrian, other)
+                    if other != astrian and self.astrian_handler.are_colliding(astrian, other):
+                        self.astrian_handler.handle_collision(astrian, other)
             else:
-                if (astrian.faction.leader is not None and astrian.faction.leader.name == astrian.name):
-                    print(f"LEADER DIED: {astrian.name}")
-                    astrian.faction.leader = None
-                    # pick a new leader if any are possible
-                    for other_astrian in self.astrians:
-                        if (other_astrian.faction.name == astrian.faction.name and not other_astrian.is_dead):
-                            print(f"NEW LEADER: {other_astrian.name}")
-                            astrian.faction.leader = other_astrian
-                            break
+                # if (astrian.faction.leader is not None and astrian.faction.leader.name == astrian.name):
+                #     print(f"LEADER DIED: {astrian.name}")
+                #     astrian.faction.leader = None
+                #     # pick a new leader if any are possible
+                #     for other_astrian in self.astrians:
+                #         if (other_astrian.faction.name == astrian.faction.name and not other_astrian.is_dead):
+                #             print(f"NEW LEADER: {other_astrian.name}")
+                #             astrian.faction.leader = other_astrian
+                #             break
                 self.astrians.remove(astrian)
 
     def handle_astrian_frame(self, astrian):
         if (astrian.mating_cooldown > 0):
             astrian.mating_cooldown -= 1
-        if astrian_actions.is_with_child(astrian):
+        if self.astrian_handler.is_with_child(astrian):
                 astrian.gestation_countdown -= 1
                 if astrian.gestation_countdown <= 0:
-                    astrian_actions.birth_child(self, astrian)
+                    self.astrian_handler.birth_child(self, astrian)
         if (astrian.remove_collision_block_countdown > 0):
             astrian.remove_collision_block_countdown -= 1
             if (astrian.remove_collision_block_countdown > 5):
@@ -70,8 +72,7 @@ class GameWorld:
         for faction in self.factions:
             if (faction.leader is None or faction.leader.is_dead):
                 for astrian in self.astrians:
-                    if (astrian.faction.name == astrian.faction.name and not astrian.is_dead):
-                        print(f"NEW LEADER: {astrian.name}")
+                    if (astrian.faction.name == faction.name and not astrian.is_dead and astrian.get_age() < 20):
                         faction.leader = astrian
                         break
 
@@ -122,7 +123,29 @@ class GameWorld:
                 empty_factions.append(faction)
         return empty_factions
     
-        
+    def get_faction_by_name(self, name):
+        for faction in self.factions:
+            if faction.name == name:
+                return faction
+        return None
+    
+    def get_faction_count_by_name(self, name):
+        count = 0
+        for astrian in self.astrians:
+            if astrian.faction.name == name:
+                count += 1
+        return count
+    
+    def check_faction_can_build_more_cities(self, faction):
+        # there should be at least one city per 10 astrians, so if theres 7 astrians we cant build another city    
+        astrian_count = 0
+        for astrian in self.astrians:
+            if astrian.faction.name == faction.name:
+                astrian_count += 1
+        city_count = 0
+        for city in faction.cities:
+            city_count += 1
+        return astrian_count / 10 > city_count
     
     def draw_cities(self):
         for faction in self.factions:
