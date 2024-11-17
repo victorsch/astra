@@ -147,6 +147,13 @@ class GameWorld:
             city_count += 1
         return astrian_count / 10 > city_count
     
+    def get_astrians_by_faction_name(self, name):
+        astrians = []
+        for astrian in self.astrians:
+            if astrian.faction.name == name:
+                astrians.append(astrian)
+        return astrians
+
     def draw_cities(self):
         for faction in self.factions:
             faction.draw(self.screen, self.camera_x, self.camera_y, self.zoom)

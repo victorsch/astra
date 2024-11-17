@@ -67,6 +67,19 @@ class City:
             )
         )
 
+    def draw_highlight(self, surface, camera_x, camera_y, zoom):
+        pygame.draw.rect(
+            surface,
+            (255, 255, 0),
+            (
+                int((self.x - camera_x) * zoom) - self.size // 2 - 5,
+                int((self.y - camera_y) * zoom) - self.size // 2 - 5,
+                int(self.size * zoom) + 10,
+                int(self.size * zoom) + 10
+            ),
+            3
+        )
+
     def claim_city(self, faction):
         if self.faction:
             if (self in self.faction.cities):

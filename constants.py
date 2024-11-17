@@ -1,5 +1,5 @@
 # Define the game world size
-world_width, world_height = 3200, 2400
+world_width, world_height = 6400, 4800
 
 screen_width, screen_height = 800, 600
 ui_height = 300
@@ -25,8 +25,8 @@ city_resource_cost = 150
 
 year_length = 5 # in seconds
 
-max_age = 50
+max_age = 35
 
-rebellion_threshold = 30
+rebellion_threshold = 50
 
 wander_distance = 100

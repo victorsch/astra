@@ -5,6 +5,7 @@ import random
 import names
 from astrian import Astrian
 from gameworld import GameWorld
+from ui import UIManager
 import constants
 
 # Initialize Pygame
@@ -19,146 +20,68 @@ pygame.display.set_caption('Astra')
 pygame.font.init()
 font = pygame.font.SysFont('Arial', 20)
 
-astrian_back_button_rect = None
-
-# def render_ui(surface, astrians, scroll_offset, selected_astrian):
-#     ui_surface = pygame.Surface((constants.screen_width, constants.ui_height))
-#     ui_surface.fill(constants.grey_color)
-#     y_offset = 10 - scroll_offset
-#     if selected_astrian:
-#         text_surface = font.render(f"Name: {selected_astrian.name}", True, constants.black_color)
-#         ui_surface.blit(text_surface, (10, y_offset))
-#         text_surface = font.render(f"Health: {selected_astrian.health}", True, constants.black_color)
-#         ui_surface.blit(text_surface, (10, y_offset + 20))
-#         text_surface = font.render(f"Faction: {selected_astrian.faction.name}", True, constants.black_color)
-#         ui_surface.blit(text_surface, (10, y_offset + 40))
-#         text_surface = font.render(f"Kills: {selected_astrian.kill_count}", True, constants.black_color)
-#         ui_surface.blit(text_surface, (10, y_offset + 60))
-#         text_surface = font.render(f"Children: {selected_astrian.child_count}", True, constants.black_color)
-#         ui_surface.blit(text_surface, (10, y_offset + 80))
-#         text_surface = font.render(f"Pregnant: {selected_astrian.gestation_countdown > 0}", True, constants.black_color)
-#         ui_surface.blit(text_surface, (10, y_offset + 100))
-#         text_surface = font.render(f"Gestation: {selected_astrian.gestation_countdown}", True, constants.black_color)
-#         ui_surface.blit(text_surface, (10, y_offset + 120))
-#         text_surface = font.render(f"Mating Cooldown: {selected_astrian.mating_cooldown}", True, constants.black_color)
-#         ui_surface.blit(text_surface, (10, y_offset + 140))
-#         text_surface = font.render(f"Objective: {selected_astrian.current_action.name if selected_astrian.current_action is not None else ''}", True, constants.black_color)
-#         ui_surface.blit(text_surface, (10, y_offset + 160))
-#         # colliding actors
-#         text_surface = font.render(f"Colliding Actors: {[actor for actor in selected_astrian.colliding_actors]}", True, constants.black_color)
-#         ui_surface.blit(text_surface, (10, y_offset + 180))
-#         # Render the back button
-#         back_button_rect = pygame.Rect(10, y_offset + 200, 100, 30)
-#         pygame.draw.rect(ui_surface, constants.black_color, back_button_rect, 2)
-#         back_text_surface = font.render("Back", True, constants.black_color)
-#         ui_surface.blit(back_text_surface, (20, y_offset + 205))
-#     else:
-#         for i, astrian in enumerate(game_world.astrians):
-#             text_surface = font.render(f"{astrian.name}: Health={astrian.health}, Faction={astrian.faction.name}, Kills={astrian.kill_count}, Children={astrian.child_count}", True, constants.black_color)
-#             ui_surface.blit(text_surface, (10, y_offset + i * 20))
-#         # Count the number of Astrians in each faction
-#         faction_counts = game_world.get_faction_counts()
-#         # for astrian in astrians:
-#         #     if astrian.faction in faction_counts:
-#         #         faction_counts[astrian.faction] += 1
-
-#         # Render the faction counts on the right side of the UI
-#         x_offset = constants.screen_width - 150
-#         y_offset = 10
-#         for faction, count in faction_counts.items():
-#             text_surface = font.render(f"{faction.capitalize()}: {count}", True, constants.black_color)
-#             ui_surface.blit(text_surface, (x_offset, y_offset))
-#             y_offset += 20
-
-#         # Display the world age in the bottom right corner
-#         world_age = game_world.get_world_age()
-#         world_age_text = font.render(f"World Age: {int(world_age)}s", True, constants.black_color)
-#         ui_surface.blit(world_age_text, (constants.screen_width - 200, constants.ui_height - 30))
-#     surface.blit(ui_surface, (0, constants.screen_height))
-
-
-def render_ui(surface, astrians, scroll_offset, selected_astrian, game_world):
-    ui_surface = pygame.Surface((constants.screen_width, constants.ui_height))
-    ui_surface.fill(constants.grey_color)
-    y_offset = 10 - scroll_offset
-    line_height = 20
-
-    if selected_astrian:
-        fields = [
-            f"Name: {selected_astrian.name}",
-            f"Health: {selected_astrian.health}",
-            f"Faction: {selected_astrian.faction.name}",
-            f"Kills: {selected_astrian.kill_count}",
-            f"Children: {selected_astrian.child_count}",
-            f"Pregnant: {selected_astrian.gestation_countdown > 0}",
-            f"Gestation: {selected_astrian.gestation_countdown}",
-            f"Mating Cooldown: {selected_astrian.mating_cooldown}",
-            f"Collision Block Countdown: {selected_astrian.remove_collision_block_countdown}",
-            f"Objective: {selected_astrian.current_action.name if selected_astrian.current_action is not None else ''}",
-            f"Colliding Actors: {[actor for actor in selected_astrian.colliding_actors]}"
-        ]
-
-        for i, field in enumerate(fields):
-            text_surface = font.render(field, True, constants.black_color)
-            ui_surface.blit(text_surface, (10, y_offset + i * line_height))
-
-        # Render the back button
-        back_button_rect = pygame.Rect(10, y_offset + len(fields) * line_height + 20, 100, 30)
-        pygame.draw.rect(ui_surface, constants.black_color, back_button_rect, 2)
-        back_text_surface = font.render("Back", True, constants.black_color)
-        global astrian_back_button_rect
-        astrian_back_button_rect = pygame.Rect(10, constants.screen_height + y_offset + len(fields) * line_height + 20, 100, 30)
-        ui_surface.blit(back_text_surface, (20, y_offset + len(fields) * line_height + 25))
-
-    else:
-        for i, astrian in enumerate(game_world.astrians):
-            text_surface = font.render(f"{astrian.name}: Health={astrian.health}, Faction={astrian.faction.name}, Age={astrian.get_age()}, Kills={astrian.kill_count}, Children={astrian.child_count}", True, constants.black_color)
-            ui_surface.blit(text_surface, (10, y_offset + i * line_height))
-
-        # Count the number of Astrians in each faction
-        faction_counts = game_world.get_faction_counts()
-
-        # Render the faction counts on the right side of the UI
-        x_offset = constants.screen_width - 150
-        y_offset = 10
-        for faction, count in faction_counts.items():
-            text_surface = font.render(f"{faction.capitalize()}: {count}", True, constants.black_color)
-            ui_surface.blit(text_surface, (x_offset, y_offset))
-            y_offset += line_height
-
-        # Display the world age in the bottom right corner
-        world_age = game_world.get_world_age()
-        world_age_text = font.render(f"World Age: {int(world_age)}s", True, constants.black_color)
-        ui_surface.blit(world_age_text, (constants.screen_width - 200, constants.ui_height - 30))
-
-    surface.blit(ui_surface, (0, constants.screen_height))
-
-
-def get_clicked_astrian(mouse_pos, astrians, scroll_offset):
-    y_offset = 10 - scroll_offset
-    for i, astrian in enumerate(game_world.astrians):
-        text_rect = pygame.Rect(10, constants.screen_height + y_offset + i * 20, 780, 20)
-        if text_rect.collidepoint(mouse_pos):
-            return astrian
-    return None
-
-def is_back_button_clicked(mouse_pos, scroll_offset):
-    y_offset = 10 - scroll_offset
-    back_button_rect = pygame.Rect(10, constants.screen_height + y_offset + 200, 100, 30)
-    return astrian_back_button_rect.collidepoint(mouse_pos)
-
 # Selected Astrian for detailed stats
 selected_astrian = None
 
 game_world = GameWorld(constants.world_width, constants.world_height, screen, [])
 game_world.setup_world()
 
+def render_astrians_tab(ui_surface, y_offset, line_height, mouse_pos=None):
+    for i, astrian in enumerate(game_world.astrians):
+        text_surface = font.render(f"{astrian.name}: Health={astrian.health}, Age={astrian.get_age()}, Faction={astrian.faction.name}, Kills={astrian.kill_count}, Children={astrian.child_count}", True, constants.black_color)
+        ui_surface.blit(text_surface, (10, y_offset + i * line_height))
+        text_rect = pygame.Rect(10, constants.screen_height + y_offset + i * line_height, 780, line_height)
+        if mouse_pos and text_rect.collidepoint(mouse_pos):
+            if pygame.mouse.get_pressed()[0]:
+                ui_manager.list_item_clicked = True
+                ui_manager.selected_astrian = astrian
+                ui_manager.selected_city = None
+                ui_manager.selected_faction = None
+            else:
+                ui_manager.list_item_clicked = False
+        else:
+            ui_manager.list_item_clicked = False
 
-# Camera position and zoom level
-dragging = False
-drag_start_x, drag_start_y = 0, 0
+def render_factions_tab(ui_surface, y_offset, line_height, mouse_pos=None):
+    factions = game_world.factions
+    # factions where astrian population is not 0
+    factions = [faction for faction in factions if game_world.get_faction_count_by_name(faction.name) > 0]
+    for i, faction in enumerate(factions):
+        text_surface = font.render(f"{faction.name}: Leader={faction.leader.name if faction.leader else 'None'}, Members={game_world.get_faction_counts().get(faction.name, 0)}", True, constants.black_color)
+        ui_surface.blit(text_surface, (10, y_offset + i * line_height))
+        text_rect = pygame.Rect(10, constants.screen_height + y_offset + i * line_height, 780, line_height)
+        if mouse_pos and text_rect.collidepoint(mouse_pos):
+            if pygame.mouse.get_pressed()[0]:
+                ui_manager.list_item_clicked = True
+                ui_manager.selected_faction = faction
+                ui_manager.selected_city = None
+                ui_manager.selected_astrian = None
+            else:
+                ui_manager.list_item_clicked = False
+        else:
+            ui_manager.list_item_clicked = False
 
-scroll_offset = 0
+def render_cities_tab(ui_surface, y_offset, line_height, mouse_pos=None):
+    for i, faction in enumerate(game_world.factions):
+        for j, city in enumerate(faction.cities):
+            text_surface = font.render(f"{city.name}: Faction={city.faction.name}, Resources={city.resources}", True, constants.black_color)
+            ui_surface.blit(text_surface, (10, y_offset + (i + j) * line_height))
+            text_rect = pygame.Rect(10, constants.screen_height + y_offset + (i + j) * line_height, 780, line_height)
+            if mouse_pos and text_rect.collidepoint(mouse_pos):
+                if pygame.mouse.get_pressed()[0]:
+                    ui_manager.list_item_clicked = True
+                    ui_manager.selected_city = city
+                    ui_manager.selected_faction = None
+                    ui_manager.selected_astrian = None
+                else:
+                    ui_manager.list_item_clicked = False
+            else:
+                ui_manager.list_item_clicked = False
+
+ui_manager = UIManager(game_world)
+ui_manager.add_tab("Astrians", render_astrians_tab)
+ui_manager.add_tab("Factions", render_factions_tab)
+ui_manager.add_tab("Cities", render_cities_tab)
 
 factions = [
     'red',
@@ -166,59 +89,19 @@ factions = [
     'green'
 ]
 
+
+
 # Main game loop
 while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                scroll_offset = max(0, scroll_offset - constants.scroll_speed)
-            elif event.key == pygame.K_DOWN:
-                scroll_offset += constants.scroll_speed
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            mouse_pos = pygame.mouse.get_pos()
-            if mouse_pos[1] < constants.screen_height:  # Mouse is on the game world
-                if event.button == 4:  # Scroll up to zoom in
-                    game_world.zoom = min(2.0, game_world.zoom + 0.1)
-                elif event.button == 5:  # Scroll down to zoom out
-                    game_world.zoom = max(0.2, game_world.zoom - 0.1)
-                elif event.button == 1:  # Left click to start dragging
-                    dragging = True
-                    drag_start_x, drag_start_y = mouse_pos
-            else:
-                if event.button == 4:  # Scroll up
-                    scroll_offset = max(0, scroll_offset - constants.scroll_speed)
-                elif event.button == 5:  # Scroll down
-                    total_text_height = len(game_world.astrians) * 20
-                    max_scroll_offset = max(0, total_text_height - constants.ui_height + 20)
-                    scroll_offset = min(max_scroll_offset, scroll_offset + constants.scroll_speed)
-                elif event.button == 1:  # Left click
-                    mouse_pos = pygame.mouse.get_pos()
-                    if selected_astrian:
-                        if is_back_button_clicked(mouse_pos, scroll_offset):
-                            selected_astrian = None
-                    else:
-                        selected_astrian = get_clicked_astrian(mouse_pos, game_world.astrians, scroll_offset)
-        elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button == 1:  # Left click to stop dragging
-                dragging = False
-        elif event.type == pygame.MOUSEMOTION:
-            if dragging:
-                mouse_x, mouse_y = pygame.mouse.get_pos()
-                game_world.camera_x -= (mouse_x - drag_start_x) / game_world.zoom
-                game_world.camera_y -= (mouse_y - drag_start_y) / game_world.zoom
-                drag_start_x, drag_start_y = mouse_x, mouse_y
-            else:
-                game_world.check_hovered_city(pygame.mouse.get_pos())
+    ui_manager.handle_input()
 
     game_world.screen.fill(constants.black_color)
 
     game_world.handle_frame()
 
     # Render the UI
-    render_ui(screen, game_world.astrians, scroll_offset, selected_astrian, game_world)
+    #ui_manager.render_ui(screen, game_world.astrians, selected_astrian)
+    ui_manager.render_ui(screen)
 
     # Display city details if hovering over a city
     if game_world.hovered_city:
@@ -238,8 +121,18 @@ while True:
             screen.blit(text_surface, (10, 10 + i * 20))
 
     # highlighted astrian overlay
-    if selected_astrian:
-        selected_astrian.draw_highlight(screen, game_world.camera_x, game_world.camera_y, game_world.zoom)
+    if ui_manager.selected_astrian:
+        ui_manager.selected_astrian.draw_highlight(screen, game_world.camera_x, game_world.camera_y, game_world.zoom)
+
+    # highlighted faction overlay
+    if ui_manager.selected_faction:
+        for city in ui_manager.selected_faction.cities:
+            city.draw_highlight(screen, game_world.camera_x, game_world.camera_y, game_world.zoom)
+        for astrian in game_world.get_astrians_by_faction_name(ui_manager.selected_faction.name):
+            astrian.draw_highlight(screen, game_world.camera_x, game_world.camera_y, game_world.zoom)
+
+    if (ui_manager.selected_city):
+        ui_manager.selected_city.draw_highlight(screen, game_world.camera_x, game_world.camera_y, game_world.zoom)
 
     # Update the display
     pygame.display.flip()
