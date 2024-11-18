@@ -100,3 +100,4 @@ class City:
         seconds_time = time.time() - self.founding_time
         years = int(seconds_time / constants.year_length)
         return years
+    

@@ -137,9 +137,9 @@ class UIManager:
                 mouse_pos = pygame.mouse.get_pos()
                 if mouse_pos[1] < constants.screen_height:  # Mouse is on the game world
                     if event.button == 4:  # Scroll up to zoom in
-                        self.game_world.zoom = min(2.0, self.game_world.zoom + 0.1)
+                        self.game_world.zoom = min(2.0, self.game_world.zoom + 0.02)
                     elif event.button == 5:  # Scroll down to zoom out
-                        self.game_world.zoom = max(0.05, self.game_world.zoom - 0.1)
+                        self.game_world.zoom = max(0.05, self.game_world.zoom - 0.02)
                     elif event.button == 1:  # Left click to start dragging
                         self.dragging = True
                         self.drag_start_x, self.drag_start_y = mouse_pos
