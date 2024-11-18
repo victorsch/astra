@@ -61,6 +61,8 @@ class Astrian:
                 self.current_action = ResettleObjective(self, game_world)
             elif self.is_leader() and faction_can_build_city and any(city.resources >= constants.city_resource_cost for city in self.faction.cities):  # Trigger SettleNewCityObjective if any city has more than 50 resources
                 self.current_action = SettleNewCityObjective(self, game_world)
+            elif self.too_far_from_home(game_world):
+                self.current_action = MoveToHomeBaseObjective(self, game_world)
             else:
                 rand = random.random()
                 # Select a new action if none is active
@@ -73,11 +75,20 @@ class Astrian:
                 elif rand > 0.02:
                     self.current_action = RandomMovementObjective(self, game_world)
                 else:
-                    if (faction_count > constants.rebellion_threshold):
+                    if (faction_count > constants.rebellion_threshold and game_world.get_faction_rebellion_ability(faction_ref)):
                         self.current_action = BranchOffObjective(self, game_world)                    
                     else:
                         self.current_action = RandomMovementObjective(self, game_world)
         self.rect.topleft = (self.x - self.radius, self.y - self.radius)
+        
+    def too_far_from_home(self, game_world):
+        faction = game_world.get_faction_by_name(self.faction.name)
+        no_close_cities = True
+        for city in faction.cities:
+            distance = city.get_distance(self)
+            if distance < 300:
+                no_close_cities = False
+        return no_close_cities
 
     def check_age(self):
         if self.get_age() > constants.max_age:
@@ -140,16 +151,19 @@ class MoveToHomeBaseObjective(Objective):
         return nearest_city
 
     def perform(self):
-        direction_x = self.city.x - self.astrian.x
-        direction_y = self.city.y - self.astrian.y
-        distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
-        if distance > 0:
-            self.astrian.velocity_x = (direction_x / distance) * .3  # Constant speed
-            self.astrian.velocity_y = (direction_y / distance) * .3
-        self.astrian.x += self.astrian.velocity_x
-        self.astrian.y += self.astrian.velocity_y
+        if (self.city is not None):
+            direction_x = self.city.x - self.astrian.x
+            direction_y = self.city.y - self.astrian.y
+            distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
+            if distance > 0:
+                self.astrian.velocity_x = (direction_x / distance) * .3  # Constant speed
+                self.astrian.velocity_y = (direction_y / distance) * .3
+            self.astrian.x += self.astrian.velocity_x
+            self.astrian.y += self.astrian.velocity_y
 
     def evaluate_complete(self):
+        if (self.city is None):
+            return True
         distance = math.sqrt((self.astrian.x - self.city.x) ** 2 + (self.astrian.y - self.city.y) ** 2)
         completed = distance < self.astrian.radius
         if (completed):
@@ -257,10 +271,20 @@ class BranchOffObjective(Objective):
         return False
 
     def _start_new_faction(self):
-        new_faction = Faction.create_new_faction()
-        self.game_world.factions.append(new_faction)
-        self.astrian.faction = new_faction
-        self.astrian.color = new_faction.color
+        existing_faction = None
+        existing_faction_count = 0
+        if (self.astrian.faction.name in self.game_world.faction_rebellion_mapping):
+            existing_faction = self.game_world.faction_rebellion_mapping[self.astrian.faction.name]
+            existing_faction_count = self.game_world.get_faction_count_by_name(existing_faction.name)
+        if (existing_faction is None):
+            new_faction = Faction.create_new_faction()
+            self.game_world.factions.append(new_faction)
+            self.game_world.faction_rebellion_mapping[self.astrian.faction.name] = new_faction
+            self.astrian.faction = new_faction
+            self.astrian.color = new_faction.color
+        elif (existing_faction is not None and existing_faction_count < 10):
+            self.astrian.faction = existing_faction
+            self.astrian.color = existing_faction.color
 
 class SeekMateObjective(Objective):
     def __init__(self, astrian, game_world):

@@ -18,6 +18,7 @@ class GameWorld:
         self.quadtree = Quadtree(0, pygame.Rect(0, 0, width, height))
         self.hovered_city = None
         self.astrian_handler = AstrianHandler(self)
+        self.faction_rebellion_mapping = {} # so that when rebellion happens astrians join one single one instead of making too many branch offs
 
     def get_world_age(self):
         return time.time() - self.start_time
@@ -146,6 +147,19 @@ class GameWorld:
         for city in faction.cities:
             city_count += 1
         return astrian_count / 10 > city_count
+    
+    def get_faction_rebellion_ability(self, faction): # if the faction has too few cities for its population
+        faction = self.get_faction_by_name(faction.name)
+        astrian_count = 0
+        for astrian in self.astrians:
+            if astrian.faction.name == faction.name:
+                astrian_count += 1
+        city_count = 0
+        for city in faction.cities:
+            city_count += 1
+        if (astrian_count/(city_count*10) > 1.5):
+            return True
+        return False
     
     def get_astrians_by_faction_name(self, name):
         astrians = []

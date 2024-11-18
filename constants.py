@@ -1,5 +1,5 @@
 # Define the game world size
-world_width, world_height = 6400, 4800
+world_width, world_height = 3200, 2400
 
 screen_width, screen_height = 800, 600
 ui_height = 300

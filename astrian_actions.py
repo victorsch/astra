@@ -50,7 +50,7 @@ class AstrianHandler:
         attacker = circle_a if self.roll_friendship() else circle_b
         defender = circle_b if attacker == circle_a else circle_a
         defender.health -= 125
-        attacker.health -= 50
+        attacker.health -= 5
         if defender.health <= 0:
             print(f"{defender.name} killed by {attacker.name}")
             defender.is_dead = True

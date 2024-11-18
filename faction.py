@@ -101,3 +101,8 @@ class City:
         years = int(seconds_time / constants.year_length)
         return years
     
+    def get_distance(self, astrian):
+        direction_x = self.x - astrian.x
+        direction_y = self.y - astrian.y
+        distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
+        return distance
